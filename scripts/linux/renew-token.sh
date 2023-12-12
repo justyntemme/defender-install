@@ -2,7 +2,7 @@
 #Renew token
 ## Permanent token method
 kubectl delete secret twistlock-sa-secret -n twistlock
-kubectl apply -f ../../twistlock-sa-secret.yaml
+kubectl apply -f ${SECRET_MANIFEST}
 TOKEN=$(kubectl get secret twistlock-sa-secret -o jsonpath='{$.data.token}' -n "$NAMESPACE" | base64 -d)
 
 ## Temporary token method
