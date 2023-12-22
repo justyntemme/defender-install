@@ -3,7 +3,7 @@
 CONSOLE_TOKEN=$(curl -k ${CONSOLE_URL}/api/v1/authenticate -X POST -H "Content-Type: application/json" -d '{
   "username":"'"$USERNAME"'",
   "password":"'"$PASSWORD"'"
-  }'  | jq -r '.token')
+  }'  | grep -Po '"'"token"'"\s*:\s*"\K([^"]*)'))
 
 
 #Push kubeconfig file to the Console
