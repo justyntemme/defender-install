@@ -11,26 +11,22 @@ loginResponse=$(curl -s -X POST "${TL_URL}/api/v1/authenticate" \
     -H 'content-type: application/json' \
     -d '{"username": "'"$PC_IDENTITY"'", "password": "'"$PC_SECRET"'"}')
 
+# Parse the response and extract the token using awk
+token=$(echo "$loginResponse" | awk -F'"' '/token/{print $4}')
 
-# Parse the response and extract the token
-token=$(echo "$loginResponse" | jq -r '.token')
-
-if [ "$token" == "null" ] || [ -z "$token" ]; then
+if [ -z "$token" ]; then
     echo "Failed to obtain Token"
     exit 1
 fi
 
 export TL_TOKEN="$token"
-echo "Token obtained: "
 
-# Query defender.sh endpoint and save the script
 defenderScript=$(curl -sSL --header "authorization: Bearer $TL_TOKEN" -X POST "${TL_URL}/api/v1/scripts/defender.sh")
 echo "$defenderScript" > defender-install.sh
 
 chmod +x defender-install.sh
 ./defender-install.sh
 
-# Check the exit status of defender-install.sh
 exit_status=$?
 
 if [ $exit_status -eq 0 ]; then
