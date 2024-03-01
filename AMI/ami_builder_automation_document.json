@@ -1,0 +1,70 @@
+{
+    "schemaVersion": "2.2",
+    "description": "AMI Builder Script",
+    "mainSteps": [
+        {
+            "name": "CheckDockerInstallation",
+            "action": "aws:runShellScript",
+            "inputs": {
+                "runCommand": [
+                    "# Check if Docker is installed",
+                    "if ! command -v docker &> /dev/null; then",
+                    "    echo 'Docker is not installed. Please install Docker before running this script.'",
+                    "    exit 1",
+                    "fi"
+                ]
+            }
+        },
+        {
+            "name": "AuthenticateWithToken",
+            "action": "aws:runShellScript",
+            "inputs": {
+                "runCommand": [
+                    "# Authenticate and obtain Token",
+                    "TL_URL=$(aws ssm get-parameter --name TL_URL --with-decryption --output text --query Parameter.Value)",
+                    "PC_IDENTITY=$(aws ssm get-parameter --name PC_IDENTITY --with-decryption --output text --query Parameter.Value)",
+                    "PC_SECRET=$(aws ssm get-parameter --name PC_SECRET --with-decryption --output text --query Parameter.Value)",
+                    "",
+                    "loginResponse=$(curl -s -X POST '$TL_URL/api/v1/authenticate'",
+                    "    -H 'accept: application/json; charset=UTF-8'",
+                    "    -H 'content-type: application/json'",
+                    "    -d '{\"username\": \"$PC_IDENTITY\", \"password\": \"$PC_SECRET\"}')",
+                    "",
+                    "# Parse the response and extract the token using awk",
+                    "token=$(echo \"$loginResponse\" | awk -F'\"' '/token/{print $4}')",
+                    "",
+                    "if [ -z \"$token\" ]; then",
+                    "    echo 'Failed to obtain Token'",
+                    "    exit 1",
+                    "fi",
+                    "",
+                    "export TL_TOKEN=\"$token\""
+                ]
+            }
+        },
+        {
+            "name": "DownloadAndInstallDefender",
+            "action": "aws:runShellScript",
+            "inputs": {
+                "runCommand": [
+                    "# Download and install Defender script",
+                    "defenderScript=$(curl -sSL --header 'authorization: Bearer $TL_TOKEN' -X POST '$TL_URL/api/v1/scripts/defender.sh')",
+                    "echo \"$defenderScript\" > defender-install.sh",
+                    "chmod +x defender-install.sh",
+                    "./defender-install.sh",
+                    "",
+                    "exit_status=$?",
+                    "",
+                    "if [ $exit_status -eq 0 ]; then",
+                    "    echo 'Defender installation completed successfully.'",
+                    "else",
+                    "    echo 'Defender installation failed with exit code $exit_status.'",
+                    "fi",
+                    "",
+                    "exit $exit_status"
+                ]
+            }
+        }
+    ]
+}
+
