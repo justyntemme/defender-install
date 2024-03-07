@@ -11,7 +11,7 @@ aws ssm put-parameter --name PC_SECRET --value "your_pc_secret_value" --type Sec
 ### Run Script from cmd
 
 ```
-aws ssm start-automation-execution --document-name "YourDocumentName" --parameters TL_URL="your_tl_url_value" PC_IDENTITY="your_pc_identity_value" PC_SECRET="your_pc_secret_value"
+aws ssm start-automation-execution --document-name "ami_builder_automation_document.json" --parameters "TL_URL=your_tl_url_value,PC_IDENTITY=your_pc_identity_value,PC_SECRET=your_pc_secret_value"
 ```
 
 
